@@ -40,45 +40,34 @@
 
         <form id="form-qc-utama" class="space-y-4 pt-4 w-full block">
           <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-            <div class="md:col-span-4 flex flex-col gap-1">
-              <label class="text-sm font-semibold text-slate-600">Nomer PO</label>
+            <div class="md:col-span-4 flex flex-col gap-1 form-group">
+              <label class="form-label">Nomer PO</label>
               <div class="flex gap-3 relative">
-                <input
-                  type="text"
-                  id="input-scan-po"
-                  placeholder="Hasil Scan PO"
-                  required
-                  class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
-                <button type="button" id="btn-scan-po" class="px-4 py-2 bg-indigo-700 text-white rounded-xl shadow-md whitespace-nowrap">Scan PO</button>
+                <input type="text" id="input-scan-po" placeholder="Hasil Scan PO" required class="form-input" />
+                <button type="button" id="btn-scan-po" class="btn btn-scan">Scan PO</button>
               </div>
             </div>
 
-            <div class="md:col-span-4 flex flex-col gap-1">
-              <label class="text-sm font-semibold text-slate-600">Nomer Batch</label>
+            <div class="md:col-span-4 flex flex-col gap-1 form-group">
+              <label class="form-label">Nomer Batch</label>
               <div class="flex gap-3 relative">
-                <input
-                  type="text"
-                  id="input-scan-batch"
-                  placeholder="Hasil Scan Batch"
-                  required
-                  class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
-                <button type="button" id="btn-scan-batch" class="px-4 py-2 bg-indigo-700 text-white rounded-xl shadow-md whitespace-nowrap">Scan Batch</button>
+                <input type="text" id="input-scan-batch" placeholder="Hasil Scan Batch" required class="form-input" />
+                <button type="button" id="btn-scan-batch" class="btn btn-scan">Scan Batch</button>
               </div>
             </div>
 
-            <div class="md:col-span-4 flex flex-col gap-1">
-              <label class="text-sm font-semibold text-slate-600">Pilih Size</label>
-              <select
-                id="size-select"
-                required
-                class="w-full px-3 py-2 border rounded-xl appearance-none bg-no-repeat bg-right pr-8 bg-white border-slate-300 invalid:border-red-500 invalid:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-              >
+            <div class="md:col-span-4 flex flex-col gap-1 form-group">
+              <label class="form-label">Pilih Size</label>
+              <select id="size-select" required class="form-input">
                 <option value="" disabled selected hidden>SELECT SIZE</option>
                 <option value="">SELECT SIZE</option>
               </select>
             </div>
+          </div>
+
+          <div id="qc-camera-container" style="display: none">
+            <div id="qc-scanner"></div>
+            <button type="button" class="close-cam-btn" id="btn-close-cam">Tutup Kamera</button>
           </div>
 
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
