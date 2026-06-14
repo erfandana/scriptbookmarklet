@@ -167,145 +167,48 @@ function initScanButtons() {
   const btnScanBatch = document.getElementById("btn-scan-batch");
   const inputScanPo = document.getElementById("input-scan-po");
   const inputScanBatch = document.getElementById("input-scan-batch");
-  const modal = document.getElementById("scanner-modal");
-  const modalTitle = document.getElementById("scanner-title");
-  const btnClose = document.getElementById("btn-close-scanner");
+  const camContainer = document.getElementById("qc-camera-container");
+  const btnCloseCam = document.getElementById("btn-close-cam");
 
   let html5Qrcode = null;
-  let targetInput = null;
 
-  function openScanner(inputElement, titleText) {
-    targetInput = inputElement;
-
-    // Modifikasi judul modal untuk menyertakan opsi upload gambar sebagai fallback/alternatif
-    if (modalTitle) {
-      modalTitle.innerHTML = `
-        <div class="flex flex-col gap-1 w-full">
-          <div class="flex items-center gap-2 text-indigo-950">
-            <i data-lucide="scan-line" class="text-indigo-600 w-5 h-5"></i> <span>${titleText}</span>
-          </div>
-          <label class="mt-2 text-xs text-indigo-600 underline cursor-pointer hover:text-indigo-800 block text-right font-normal">
-            Atau klik disini untuk upload foto Barcode
-            <input type="file" id="fallback-scan-file" accept="image/*" class="hidden" />
-          </label>
-        </div>
-      `;
-    }
-    lucide.createIcons();
-
-    if (modal) {
-      modal.classList.remove("hidden");
-      setTimeout(() => {
-        modal.classList.remove("opacity-0");
-      }, 50);
-    }
-
-    const readerElem = document.getElementById("scanner-reader");
-    if (readerElem) readerElem.innerHTML = "";
-
-    html5Qrcode = new Html5Qrcode("scanner-reader");
-
-    // Pasang event listener untuk fallback upload file gambar di dalam modal
-    setTimeout(() => {
-      const fallbackInput = document.getElementById("fallback-scan-file");
-      if (fallbackInput) {
-        fallbackInput.addEventListener("change", function (e) {
-          const file = e.target.files[0];
-          if (!file) return;
-
-          html5Qrcode
-            .scanFile(file, true)
-            .then((decodedText) => {
-              onScanSuccess(decodedText);
-            })
-            .catch((err) => {
-              alert("Sistem gagal membaca barcode dari gambar ini. Pastikan gambar barcode jelas.");
-              console.error(err);
-            });
-        });
-      }
-    }, 100);
-
-    // Jalankan Kamera bawaan
-    Html5Qrcode.getCameras()
-      .then((devices) => {
-        if (!devices.length) {
-          throw new Error("Kamera hardware tidak terdeteksi.");
-        }
-        const camera = devices.find((d) => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("rear")) || devices[0];
-        return html5Qrcode.start(camera.id, { fps: 10, qrbox: { width: 280, height: 160 } }, onScanSuccess, onScanFailure);
-      })
-      .then(() => {
-        setTimeout(() => {
-          const video = document.querySelector("#scanner-reader video");
-          if (video) {
-            video.style.width = "100%";
-            video.style.height = "auto";
-            video.style.display = "block";
-            video.style.objectFit = "cover";
+  function closeCamera() {
+    if (html5Qrcode) {
+      html5Qrcode
+        .stop()
+        .catch(() => {})
+        .finally(() => {
+          if (camContainer) {
+            camContainer.style.display = "none";
           }
-        }, 100);
+        });
+    }
+  }
+
+  function startScanner(targetInput) {
+    if (camContainer) {
+      camContainer.style.display = "block";
+    }
+
+    // Inisialisasi murni searah dengan contoh kode andalan Anda yang sukses berjalan
+    html5Qrcode = new Html5Qrcode("qc-scanner");
+    html5Qrcode
+      .start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (decodedText) => {
+        if (targetInput) {
+          targetInput.value = decodedText;
+        }
+        closeCamera();
       })
       .catch((err) => {
-        console.error("Gagal inisialisasi kamera live:", err);
-
-        // Tampilkan pesan panduan alternatif di dalam box scanner (bukan alert pop-up yang mengganggu)
-        if (readerElem) {
-          readerElem.innerHTML = `
-            <div class="p-6 text-center text-sm text-slate-600 bg-red-50 rounded-xl border border-red-100">
-              <p class="font-bold text-red-700 mb-1">Akses Kamera Diblokir Browser</p>
-              <p class="text-xs mb-3 text-slate-500">Sistem keamanan situs web ini membatasi fungsi kamera via bookmarklet.</p>
-              <p class="font-semibold text-indigo-700">Silakan gunakan menu "Upload foto Barcode" di bagian atas modal ini.</p>
-            </div>
-          `;
-        }
+        console.error("Gagal akses kamera:", err);
+        alert("Kamera gagal diakses: " + err);
       });
   }
 
-  function closeScanner() {
-    if (html5Qrcode && html5Qrcode.isScanning) {
-      html5Qrcode
-        .stop()
-        .then(() => {
-          hideModalElements();
-        })
-        .catch(() => {
-          hideModalElements();
-        });
-    } else {
-      hideModalElements();
-    }
-  }
-
-  function hideModalElements() {
-    if (modal) {
-      modal.classList.add("opacity-0");
-      setTimeout(() => {
-        modal.classList.add("hidden");
-        const readerElem = document.getElementById("scanner-reader");
-        if (readerElem) readerElem.innerHTML = "";
-      }, 300);
-    }
-  }
-
-  function onScanSuccess(decodedText) {
-    if (targetInput) {
-      targetInput.value = decodedText;
-      targetInput.classList.add("bg-green-50", "border-green-400");
-      setTimeout(() => {
-        targetInput.classList.remove("bg-green-50", "border-green-400");
-      }, 1000);
-    }
-    closeScanner();
-  }
-
-  function onScanFailure(error) {
-    // Diabaikan agar log tidak penuh saat proses pencarian frame barcode berjalan live
-  }
-
-  if (btnScanPo) btnScanPo.addEventListener("click", () => openScanner(inputScanPo, "Scan Barcode Nomer PO"));
-  if (btnScanBatch) btnScanBatch.addEventListener("click", () => openScanner(inputScanBatch, "Scan Barcode Nomer Batch"));
-  if (btnClose) btnClose.addEventListener("click", closeScanner);
+  // Set pemicu klik tombol
+  if (btnScanPo) btnScanPo.onclick = () => startScanner(inputScanPo);
+  if (btnScanBatch) btnScanBatch.onclick = () => startScanner(inputScanBatch);
+  if (btnCloseCam) btnCloseCam.onclick = closeCamera;
 }
 
 function initTabInteractions() {
