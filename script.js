@@ -146,6 +146,20 @@ function initSizeDropdown(data) {
   if (densityInput1) {
     densityInput1.addEventListener("input", calculateWeights);
   }
+
+  // Tambahan: Supaya saat input Botol, Cap, dll diubah manual, hasil perhitungan di bawah otomatis ikut berubah
+  Object.keys(inputs).forEach((key) => {
+    if (inputs[key] && key !== "note") {
+      inputs[key].addEventListener("input", () => {
+        // Update data sementara di memory agar fungsi kalkulasi mengambil angka baru yang diketik
+        const selectedIndex = sizeSelect.value;
+        if (selectedIndex !== "") {
+          data[selectedIndex][key] = parseFloat(inputs[key].value) || 0;
+          calculateWeights();
+        }
+      });
+    }
+  });
 }
 
 function initScanButtons() {
@@ -162,8 +176,20 @@ function initScanButtons() {
 
   function openScanner(inputElement, titleText) {
     targetInput = inputElement;
+
+    // Modifikasi judul modal untuk menyertakan opsi upload gambar sebagai fallback/alternatif
     if (modalTitle) {
-      modalTitle.innerHTML = `<i data-lucide="scan-line" class="text-indigo-600 w-5 h-5"></i> ${titleText}`;
+      modalTitle.innerHTML = `
+        <div class="flex flex-col gap-1 w-full">
+          <div class="flex items-center gap-2 text-indigo-950">
+            <i data-lucide="scan-line" class="text-indigo-600 w-5 h-5"></i> <span>${titleText}</span>
+          </div>
+          <label class="mt-2 text-xs text-indigo-600 underline cursor-pointer hover:text-indigo-800 block text-right font-normal">
+            Atau klik disini untuk upload foto Barcode
+            <input type="file" id="fallback-scan-file" accept="image/*" class="hidden" />
+          </label>
+        </div>
+      `;
     }
     lucide.createIcons();
 
@@ -178,11 +204,33 @@ function initScanButtons() {
     if (readerElem) readerElem.innerHTML = "";
 
     html5Qrcode = new Html5Qrcode("scanner-reader");
+
+    // Pasang event listener untuk fallback upload file gambar di dalam modal
+    setTimeout(() => {
+      const fallbackInput = document.getElementById("fallback-scan-file");
+      if (fallbackInput) {
+        fallbackInput.addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          html5Qrcode
+            .scanFile(file, true)
+            .then((decodedText) => {
+              onScanSuccess(decodedText);
+            })
+            .catch((err) => {
+              alert("Sistem gagal membaca barcode dari gambar ini. Pastikan gambar barcode jelas.");
+              console.error(err);
+            });
+        });
+      }
+    }, 100);
+
+    // Jalankan Kamera bawaan
     Html5Qrcode.getCameras()
       .then((devices) => {
         if (!devices.length) {
-          alert("Kamera tidak ditemukan");
-          return;
+          throw new Error("Kamera hardware tidak terdeteksi.");
         }
         const camera = devices.find((d) => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("rear")) || devices[0];
         return html5Qrcode.start(camera.id, { fps: 10, qrbox: { width: 280, height: 160 } }, onScanSuccess, onScanFailure);
@@ -196,12 +244,21 @@ function initScanButtons() {
             video.style.display = "block";
             video.style.objectFit = "cover";
           }
-        }, 1000);
+        }, 100);
       })
       .catch((err) => {
-        console.error(err);
-        alert("Kamera gagal diakses: " + err);
-        closeScanner();
+        console.error("Gagal inisialisasi kamera live:", err);
+
+        // Tampilkan pesan panduan alternatif di dalam box scanner (bukan alert pop-up yang mengganggu)
+        if (readerElem) {
+          readerElem.innerHTML = `
+            <div class="p-6 text-center text-sm text-slate-600 bg-red-50 rounded-xl border border-red-100">
+              <p class="font-bold text-red-700 mb-1">Akses Kamera Diblokir Browser</p>
+              <p class="text-xs mb-3 text-slate-500">Sistem keamanan situs web ini membatasi fungsi kamera via bookmarklet.</p>
+              <p class="font-semibold text-indigo-700">Silakan gunakan menu "Upload foto Barcode" di bagian atas modal ini.</p>
+            </div>
+          `;
+        }
       });
   }
 
@@ -243,7 +300,7 @@ function initScanButtons() {
   }
 
   function onScanFailure(error) {
-    // Penanganan error scan opsional
+    // Diabaikan agar log tidak penuh saat proses pencarian frame barcode berjalan live
   }
 
   if (btnScanPo) btnScanPo.addEventListener("click", () => openScanner(inputScanPo, "Scan Barcode Nomer PO"));
