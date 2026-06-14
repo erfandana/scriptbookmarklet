@@ -1,10 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Inisialisasi ikon Lucide dan interaksi tombol di awal load page
   lucide.createIcons();
   initTabInteractions();
   initScanButtons();
+  initImageOcr(); // Inisialisasi Fitur OCR
 
-  // Mengambil database spesifikasi material produk
   fetch("packaging.json")
     .then((response) => {
       if (!response.ok) throw new Error("Gagal mengambil data file json.");
@@ -22,7 +21,6 @@ function initSizeDropdown(data) {
   const sizeSelect = document.getElementById("size-select");
   const densityInput1 = document.getElementById("input-density-1");
 
-  // Pemetaan elemen form input spesifikasi material
   const inputs = {
     cap: document.getElementById("input-cap"),
     botol: document.getElementById("input-botol"),
@@ -31,10 +29,9 @@ function initSizeDropdown(data) {
     label: document.getElementById("input-label"),
     folding: document.getElementById("input-folding"),
     layer: document.getElementById("input-layer"),
-    note: document.getElementById("input-note"), // Menunjuk ke elemen HTML input note
+    note: document.getElementById("input-note"),
   };
 
-  // Pemetaan elemen form output hasil perhitungan matematis
   const calcOutputs = {
     nettTarget: document.getElementById("nett-target"),
     nettMin: document.getElementById("nett-min"),
@@ -48,7 +45,6 @@ function initSizeDropdown(data) {
     cartonToleransi: document.getElementById("carton-toleransi"),
   };
 
-  // Memasukkan daftar ukuran produk ke dalam elemen select dropdown
   if (sizeSelect) {
     sizeSelect.innerHTML = '<option value="">SELECT SIZE</option>';
     data.forEach((item, index) => {
@@ -59,9 +55,6 @@ function initSizeDropdown(data) {
     });
   }
 
-  // ========================================================
-  // LOGIKA UTAMA PERHITUNGAN MATEMATIKA QC
-  // ========================================================
   function calculateWeights() {
     const selectedIndex = sizeSelect.value;
     const density = parseFloat(densityInput1.value) || 0;
@@ -69,7 +62,6 @@ function initSizeDropdown(data) {
     if (selectedIndex !== "" && density > 0) {
       const selectedData = data[selectedIndex];
 
-      // Ambil nilai dasar spesifikasi (satuan gram dan ml) dari JSON
       const volume = selectedData.volume || 0;
       const isi = selectedData.isi || 0;
       const botol = selectedData.botol || 0;
@@ -80,53 +72,36 @@ function initSizeDropdown(data) {
       const layer = selectedData.layer || 0;
       const toleransi = selectedData.toleransi || 0;
 
-      // ----------------------------------------------------
-      // 1. HITUNG BERAT NETT PCS (GRAM)
-      // ----------------------------------------------------
       const nettTarget = volume * density;
       const nettMin = nettTarget - toleransi;
       const nettMax = nettTarget + toleransi;
 
-      // ----------------------------------------------------
-      // 2. HITUNG BERAT GROSS PCS (GRAM)
-      // ----------------------------------------------------
       const grossTarget = nettTarget + botol + cap;
       const grossMin = nettMin + botol + cap;
       const grossMax = nettMax + botol + cap;
 
-      // ----------------------------------------------------
-      // 3. HITUNG BERAT GROSS CARTON (GRAM) & KONDISI TOLERANSI
-      // ----------------------------------------------------
       const aksesorisKardus = layer + cartonPackaging;
       const aksesorisBotol = isi * (label + folding);
 
-      // Rumus target kotor karton dan batas maksimum karton (dalam gram)
       const cartonTargetGram = grossTarget * isi + aksesorisKardus + aksesorisBotol;
       const cartonMaxGram = grossMax * isi + aksesorisKardus + aksesorisBotol;
 
       let cartonMinGram = 0;
       let cartonToleransiGram = 0;
 
-      // Aturan kondisional pembagian volume sesuai standar QC Anda
       if (volume <= 250) {
-        // KONDISI JIKA 250ML KEBAWAH (TERMASUK 250ML)
         cartonMinGram = cartonTargetGram - nettTarget;
-        cartonToleransiGram = nettTarget; // Toleransi sebesar target nett per pcs
+        cartonToleransiGram = nettTarget;
       } else if (volume >= 500) {
-        // KONDISI JIKA 500ML SAMPAI 5 LITER
         cartonMinGram = grossMin * isi + aksesorisKardus + aksesorisBotol;
-        cartonToleransiGram = cartonMaxGram - cartonTargetGram; // Selisih max dengan target
+        cartonToleransiGram = cartonMaxGram - cartonTargetGram;
       }
 
-      // ----------------------------------------------------
-      // 4. KONVERSI OUTPUT HASIL KE KILOGRAM (KG) / DIBAGI 1000
-      // ----------------------------------------------------
       const cartonTargetKg = cartonTargetGram / 1000;
       const cartonMinKg = cartonMinGram / 1000;
       const cartonMaxKg = cartonMaxGram / 1000;
       const cartonToleransiKg = cartonToleransiGram / 1000;
 
-      // Tempelkan hasil akhir ke masing-masing kolom teks form UI
       if (calcOutputs.nettTarget) calcOutputs.nettTarget.value = nettTarget.toFixed(2);
       if (calcOutputs.nettMin) calcOutputs.nettMin.value = nettMin.toFixed(2);
       if (calcOutputs.nettMax) calcOutputs.nettMax.value = nettMax.toFixed(2);
@@ -140,34 +115,26 @@ function initSizeDropdown(data) {
       if (calcOutputs.cartonMax) calcOutputs.cartonMax.value = cartonMaxKg.toFixed(3);
       if (calcOutputs.cartonToleransi) calcOutputs.cartonToleransi.value = cartonToleransiKg.toFixed(3);
     } else {
-      // Reset bersihkan form output jika data inputan belum lengkap
       Object.keys(calcOutputs).forEach((key) => {
         if (calcOutputs[key]) calcOutputs[key].value = "";
       });
     }
   }
 
-  // Event pemicu ketika pilihan jenis/ukuran produk diganti
   if (sizeSelect) {
     sizeSelect.addEventListener("change", function () {
       const selectedIndex = this.value;
-
       if (selectedIndex !== "") {
         const selectedData = data[selectedIndex];
-
-        // Auto-fill field data numerik standar
         Object.keys(inputs).forEach((key) => {
           if (inputs[key] && key !== "note") {
             inputs[key].value = selectedData[key] !== undefined ? selectedData[key] : "";
           }
         });
-
-        // Ambil teks string secara manual dari key '_note' di JSON Anda
         if (inputs.note) {
           inputs.note.value = selectedData._note !== undefined ? selectedData._note : "";
         }
       } else {
-        // Kosongkan seluruh form jika select kembali ke default "SELECT SIZE"
         Object.keys(inputs).forEach((key) => {
           if (inputs[key]) inputs[key].value = "";
         });
@@ -176,21 +143,16 @@ function initSizeDropdown(data) {
     });
   }
 
-  // Jalankan perhitungan ulang secara real-time saat angka density diketik manual
   if (densityInput1) {
     densityInput1.addEventListener("input", calculateWeights);
   }
 }
 
-// ========================================================
-// LOGIKA BUKA KAMERA SCANNER BARCODE (CLEAN TANPA IMPORT)
-// ========================================================
 function initScanButtons() {
   const btnScanPo = document.getElementById("btn-scan-po");
   const btnScanBatch = document.getElementById("btn-scan-batch");
   const inputScanPo = document.getElementById("input-scan-po");
   const inputScanBatch = document.getElementById("input-scan-batch");
-
   const modal = document.getElementById("scanner-modal");
   const modalTitle = document.getElementById("scanner-title");
   const btnClose = document.getElementById("btn-close-scanner");
@@ -216,28 +178,14 @@ function initScanButtons() {
     if (readerElem) readerElem.innerHTML = "";
 
     html5Qrcode = new Html5Qrcode("scanner-reader");
-
     Html5Qrcode.getCameras()
       .then((devices) => {
         if (!devices.length) {
           alert("Kamera tidak ditemukan");
           return;
         }
-
-        const camera = devices.find(d =>
-          d.label.toLowerCase().includes("back") ||
-          d.label.toLowerCase().includes("rear")
-        ) || devices[0];
-
-        return html5Qrcode.start(
-          camera.id,
-          {
-            fps: 10,
-            qrbox: { width: 280, height: 160 }
-          },
-          onScanSuccess,
-          onScanFailure
-        );
+        const camera = devices.find((d) => d.label.toLowerCase().includes("back") || d.label.toLowerCase().includes("rear")) || devices[0];
+        return html5Qrcode.start(camera.id, { fps: 10, qrbox: { width: 280, height: 160 } }, onScanSuccess, onScanFailure);
       })
       .then(() => {
         setTimeout(() => {
@@ -258,17 +206,15 @@ function initScanButtons() {
   }
 
   function closeScanner() {
-    if (html5Qrcode) {
-      if (html5Qrcode.isScanning) {
-        html5Qrcode.stop()
-          .then(() => { hideModalElements(); })
-          .catch((err) => {
-            console.error("Gagal mematikan stream video kamera:", err);
-            hideModalElements();
-          });
-      } else {
-        hideModalElements();
-      }
+    if (html5Qrcode && html5Qrcode.isScanning) {
+      html5Qrcode
+        .stop()
+        .then(() => {
+          hideModalElements();
+        })
+        .catch(() => {
+          hideModalElements();
+        });
     } else {
       hideModalElements();
     }
@@ -285,7 +231,7 @@ function initScanButtons() {
     }
   }
 
-  function onScanSuccess(decodedText, decodedResult) {
+  function onScanSuccess(decodedText) {
     if (targetInput) {
       targetInput.value = decodedText;
       targetInput.classList.add("bg-green-50", "border-green-400");
@@ -297,78 +243,251 @@ function initScanButtons() {
   }
 
   function onScanFailure(error) {
-    // Diabaikan karena scanning berulang terus-menerus
+    // Penanganan error scan opsional
   }
 
-  if (btnScanPo) {
-    btnScanPo.addEventListener("click", () => openScanner(inputScanPo, "Scan Barcode Nomer PO"));
-  }
-  if (btnScanBatch) {
-    btnScanBatch.addEventListener("click", () => openScanner(inputScanBatch, "Scan Barcode Nomer Batch"));
-  }
-  if (btnClose) {
-    btnClose.addEventListener("click", closeScanner);
-  }
+  if (btnScanPo) btnScanPo.addEventListener("click", () => openScanner(inputScanPo, "Scan Barcode Nomer PO"));
+  if (btnScanBatch) btnScanBatch.addEventListener("click", () => openScanner(inputScanBatch, "Scan Barcode Nomer Batch"));
+  if (btnClose) btnClose.addEventListener("click", closeScanner);
 }
 
-// ========================================================
-// INTERAKSI DESAIN TABS & PERGANTIAN FORM MULTI-TAB
-// ========================================================
 function initTabInteractions() {
   const tabs = document.querySelectorAll(".tab-btn");
-  
   const formUtama = document.getElementById("form-qc-utama");
   const formMakanan = document.getElementById("form-qc-makanan");
   const formMinuman = document.getElementById("form-qc-minuman");
   const actionButtons = document.getElementById("action-buttons-container");
 
-  // Render input grid dinamis Makanan di dalam JS agar rapi
   const containerBotolCap = document.getElementById("container-botol-cap");
   const containerBeratGross = document.getElementById("container-berat-gross");
-  
-  if (containerBotolCap || containerBeratGross) {
-    let htmlInputs = "";
+  const containerNitrogen = document.getElementById("container-nitrogen");
+
+  // Render otomatis Input 1 sampai 10
+  if (containerBotolCap && containerBeratGross && containerNitrogen) {
+    let htmlBotolCap = "";
+    let htmlBeratGross = "";
+    let htmlNitrogen = "";
+
     for (let i = 1; i <= 10; i++) {
-      htmlInputs += `
-        <div class="flex flex-col gap-1">
+      htmlBotolCap += `
+        <div class="flex flex-col gap-1 w-full">
           <label class="text-sm font-bold text-indigo-700 underline">${i}</label>
-          <input type="number" step="0.01" placeholder="Input Density" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-300 transition shadow-sm" />
+          <input type="number" step="0.01" id="makanan-bc-${i}" placeholder="0.00" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-300 transition shadow-sm bg-white" />
+        </div>
+      `;
+      htmlBeratGross += `
+        <div class="flex flex-col gap-1 w-full">
+          <label class="text-sm font-bold text-indigo-700 underline">${i}</label>
+          <input type="number" step="0.01" id="makanan-bg-${i}" placeholder="0.00" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-300 transition shadow-sm bg-white" />
+        </div>
+      `;
+      htmlNitrogen += `
+        <div class="flex flex-col gap-1 w-full">
+          <label class="text-sm font-bold text-indigo-700 underline">${i}</label>
+          <input type="number" step="0.01" id="minuman-nitro-${i}" placeholder="0.00" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-300 transition shadow-sm bg-white" />
         </div>
       `;
     }
-    if (containerBotolCap) containerBotolCap.innerHTML = htmlInputs;
-    if (containerBeratGross) containerBeratGross.innerHTML = htmlInputs;
+    containerBotolCap.innerHTML = htmlBotolCap;
+    containerBeratGross.innerHTML = htmlBeratGross;
+    containerNitrogen.innerHTML = htmlNitrogen;
   }
 
+  // --- LOGIKA UTAMA: CLEAR TOTAL SEMUA HALAMAN & TAB ---
+  if (actionButtons) {
+    const btnClear = actionButtons.querySelector('button[type="button"]');
+    if (btnClear) {
+      btnClear.addEventListener("click", function () {
+        // 1. RESET TAB UTAMA (Kalibrasi)
+        if (formUtama) {
+          formUtama.reset();
+
+          // Kosongkan manual elemen input berstatus readonly hasil kalkulasi
+          const readonlyInputs = formUtama.querySelectorAll("input[readonly]");
+          readonlyInputs.forEach((input) => (input.value = ""));
+        }
+
+        // 2. RESET TAB MAKANAN (Berat)
+        for (let i = 1; i <= 10; i++) {
+          const bcInput = document.getElementById(`makanan-bc-${i}`);
+          const bgInput = document.getElementById(`makanan-bg-${i}`);
+          if (bcInput) bcInput.value = "";
+          if (bgInput) bgInput.value = "";
+        }
+
+        const fileBC = document.getElementById("import-botol-cap");
+        const fileBG = document.getElementById("import-berat-gross");
+        if (fileBC) fileBC.value = "";
+        if (fileBG) fileBG.value = "";
+
+        const labelBC = document.getElementById("file-name-label");
+        const labelBG = document.getElementById("file-name-gross-label");
+        if (labelBC) {
+          labelBC.textContent = "Belum ada file terpilih";
+          labelBC.className = "text-sm text-slate-400 italic font-medium truncate max-w-xs";
+        }
+        if (labelBG) {
+          labelBG.textContent = "Belum ada file terpilih";
+          labelBG.className = "text-sm text-slate-400 italic font-medium truncate max-w-xs";
+        }
+
+        // 3. RESET TAB MINUMAN (Nitrogen)
+        for (let i = 1; i <= 10; i++) {
+          const nitroInput = document.getElementById(`minuman-nitro-${i}`);
+          if (nitroInput) nitroInput.value = "";
+        }
+
+        const fileNitro = document.getElementById("import-nitrogen");
+        if (fileNitro) fileNitro.value = "";
+
+        const labelNitro = document.getElementById("file-name-nitrogen-label");
+        if (labelNitro) {
+          labelNitro.textContent = "Belum ada file terpilih";
+          labelNitro.className = "text-sm text-slate-400 italic font-medium truncate max-w-xs";
+        }
+      });
+    }
+  }
+
+  // --- FILTER DAN INTERAKSI KLIK TAB ---
   tabs.forEach((tab) => {
     tab.addEventListener("click", function () {
-      // 1. Reset visual state seluruh tab
+      // Reset semua tab ke kondisi tidak aktif (menggunakan border transparan)
       tabs.forEach((item) => {
-        item.className = "tab-btn hover:text-indigo-800 pb-2 text-slate-400 cursor-pointer";
+        item.className = "tab-btn text-slate-400 border-b-2 border-transparent hover:text-indigo-800 pb-2 px-1 cursor-pointer whitespace-nowrap";
       });
 
-      // 2. Set active state untuk tab yang diklik (menggunakan sintaks bersih kelas string biasa)
-      this.className = "tab-btn text-indigo-800 border-b-2 border-indigo-800 pb-2 -mb-[10px] px-1 font-semibold cursor-pointer";
+      // Set tab yang diklik menjadi aktif (menggunakan border indigo)
+      this.className = "tab-btn text-indigo-800 border-b-2 border-indigo-800 pb-2 px-1 font-semibold cursor-pointer whitespace-nowrap";
 
-      // 3. Sembunyikan semua kontainer form terlebih dahulu
-      if (formUtama) formUtama.classList.add("hidden");
-      if (formMakanan) formMakanan.classList.add("hidden");
-      if (formMinuman) formMinuman.classList.add("hidden");
+      if (formUtama) {
+        formUtama.classList.add("hidden");
+        formUtama.classList.remove("block");
+      }
+      if (formMakanan) {
+        formMakanan.classList.add("hidden");
+        formMakanan.classList.remove("block");
+      }
+      if (formMinuman) {
+        formMinuman.classList.add("hidden");
+        formMinuman.classList.remove("block");
+      }
 
-      // 4. Tampilkan form spesifik yang dipilih berdasarkan ID Tab
       const tabId = this.id;
-      if (tabId === "tab-semua") {
-        if (formUtama) formUtama.classList.remove("hidden");
+      if (tabId === "tab-kalibrasi" && formUtama) {
+        formUtama.classList.remove("hidden");
+        formUtama.classList.add("block");
+        if (actionButtons) actionButtons.classList.add("hidden");
+      } else if (tabId === "tab-berat" && formMakanan) {
+        formMakanan.classList.remove("hidden");
+        formMakanan.classList.add("block");
+        if (actionButtons) actionButtons.classList.add("hidden");
+      } else if (tabId === "tab-nitrogen" && formMinuman) {
+        formMinuman.classList.remove("hidden");
+        formMinuman.classList.add("block");
         if (actionButtons) actionButtons.classList.remove("hidden");
-      } else if (tabId === "tab-makanan") {
-        if (formMakanan) formMakanan.classList.remove("hidden");
-        if (actionButtons) actionButtons.classList.remove("hidden");
-      } else if (tabId === "tab-minuman") {
-        if (formMinuman) formMinuman.classList.remove("hidden");
-        if (actionButtons) actionButtons.classList.remove("hidden");
-      } else if (tabId === "tab-snack") {
-        if (actionButtons) actionButtons.classList.add("hidden"); // Sembunyikan tombol jika halaman snack masih kosong
+      } else {
+        if (actionButtons) actionButtons.classList.add("hidden");
       }
     });
   });
+}
+
+function initImageOcr() {
+  // --- 1. OCR BERAT BOTOL & CAP (Tab Berat) ---
+  const fileInputBC = document.getElementById("import-botol-cap");
+  const fileNameLabelBC = document.getElementById("file-name-label");
+
+  if (fileInputBC && fileNameLabelBC) {
+    fileInputBC.addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      fileNameLabelBC.textContent = file.name;
+      fileNameLabelBC.className = "text-sm text-indigo-600 font-semibold truncate max-w-xs";
+
+      for (let i = 1; i <= 10; i++) {
+        const inputField = document.getElementById(`makanan-bc-${i}`);
+        if (inputField) inputField.value = "";
+      }
+      prosesOcrGambar(file, "makanan-bc-");
+    });
+  }
+
+  // --- 2. OCR BERAT GROSS (Tab Berat) ---
+  const fileInputBG = document.getElementById("import-berat-gross");
+  const fileNameLabelBG = document.getElementById("file-name-gross-label");
+
+  if (fileInputBG && fileNameLabelBG) {
+    fileInputBG.addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      fileNameLabelBG.textContent = file.name;
+      fileNameLabelBG.className = "text-sm text-indigo-600 font-semibold truncate max-w-xs";
+
+      for (let i = 1; i <= 10; i++) {
+        const inputField = document.getElementById(`makanan-bg-${i}`);
+        if (inputField) inputField.value = "";
+      }
+      prosesOcrGambar(file, "makanan-bg-");
+    });
+  }
+
+  // --- 3. OCR PENGECEKAN NITROGEN (Tab Nitrogen) ---
+  const fileInputNitro = document.getElementById("import-nitrogen");
+  const fileNameLabelNitro = document.getElementById("file-name-nitrogen-label");
+
+  if (fileInputNitro && fileNameLabelNitro) {
+    fileInputNitro.addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      fileNameLabelNitro.textContent = file.name;
+      fileNameLabelNitro.className = "text-sm text-indigo-600 font-semibold truncate max-w-xs";
+
+      for (let i = 1; i <= 10; i++) {
+        const inputField = document.getElementById(`minuman-nitro-${i}`);
+        if (inputField) inputField.value = "";
+      }
+      prosesOcrGambar(file, "minuman-nitro-");
+    });
+  }
+}
+
+function prosesOcrGambar(file, prefixIdTarget) {
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width * 2;
+      canvas.height = img.height * 2;
+      const ctx = canvas.getContext("2d");
+      ctx.filter = "contrast(200%)";
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      Tesseract.recognize(canvas, "eng", {
+        tessedit_char_whitelist: "0123456789.kg ",
+      }).then(({ data: { text } }) => {
+        const lines = text.split("\n").filter((l) => l.trim().length > 0);
+
+        lines.forEach((line, index) => {
+          if (index < 10) {
+            let cleanLine = line.toLowerCase().replace(/\s+/g, "");
+            let num = parseFloat(cleanLine);
+
+            if (!isNaN(num)) {
+              if (cleanLine.includes("kg")) {
+                num = num * 1000;
+              }
+              const currentInput = document.getElementById(`${prefixIdTarget}${index + 1}`);
+              if (currentInput) {
+                currentInput.value = num;
+              }
+            }
+          }
+        });
+      });
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
 }
