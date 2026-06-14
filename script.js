@@ -329,43 +329,45 @@ function openScanner(inputElement, titleText) {
 }
 
 // ========================================================
-// INTERAKSI DESAIN TABS
-// ========================================================
-// ========================================================
-// INTERAKSI DESAIN TABS & PERGANTIAN FORM
+// INTERAKSI DESAIN TABS & PERGANTIAN FORM MULTI-TAB
 // ========================================================
 function initTabInteractions() {
   const tabs = document.querySelectorAll(".tab-btn");
+  
+  // Daftarkan semua kontainer form dari HTML
   const formUtama = document.getElementById("form-qc-utama");
   const formMakanan = document.getElementById("form-qc-makanan");
+  const formMinuman = document.getElementById("form-qc-minuman");
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", function () {
-      // 1. Bersihkan semua style aktif dari semua tab
+      // 1. Reset visual state seluruh tab
       tabs.forEach((item) => {
         item.classList.remove("text-indigo-800", "border-b-2", "border-indigo-800", "font-semibold", "-mb-[10px]", "px-1");
         item.classList.add("text-slate-400");
       });
 
-      // 2. Set style aktif pada tab yang sedang diklik
+      // 2. Set active state untuk tab yang diklik
       this.classList.remove("text-slate-400");
       this.classList.add("text-indigo-800", "border-b-2", "border-indigo-800", "font-semibold", "-mb-[10px]", "px-1");
 
-      // 3. LOGIKA PERGANTIAN HALAMAN/FORM
+      // 3. Logika penyembunyian halaman/form berdasarkan ID tombol tab
       const tabId = this.id;
 
-      if (tabId === "tab-makanan") {
-        // Jika klik tab Makanan -> Sembunyikan utama, munculkan makanan
-        if (formUtama) formUtama.classList.add("hidden");
-        if (formMakanan) formMakanan.classList.remove("hidden");
-      } else if (tabId === "tab-semua") {
-        // Jika klik tab Semua -> Munculkan utama, sembunyikan makanan
+      // Sembunyikan semua form terlebih dahulu (Reset default)
+      if (formUtama) formUtama.classList.add("hidden");
+      if (formMakanan) formMakanan.classList.add("hidden");
+      if (formMinuman) formMinuman.classList.add("hidden");
+
+      // Tampilkan form spesifik yang dipilih
+      if (tabId === "tab-semua") {
         if (formUtama) formUtama.classList.remove("hidden");
-        if (formMakanan) formMakanan.classList.add("hidden");
-      } else {
-        // Untuk tab Minuman dan Snack (jika formnya belum dibuat, sembunyikan semua dulu)
-        if (formUtama) formUtama.classList.add("hidden");
-        if (formMakanan) formMakanan.classList.add("hidden");
+      } else if (tabId === "tab-makanan") {
+        if (formMakanan) formMakanan.classList.remove("hidden");
+      } else if (tabId === "tab-minuman") {
+        if (formMinuman) formMinuman.classList.remove("hidden"); // Munculkan form nitrogen
+      } else if (tabId === "tab-snack") {
+        // Jika nanti ada form snack, tampilkan di sini
       }
     });
   });
