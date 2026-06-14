@@ -49,13 +49,15 @@ function initSizeDropdown(data) {
   };
 
   // Memasukkan daftar ukuran produk ke dalam elemen select dropdown
-  sizeSelect.innerHTML = '<option value="">SELECT SIZE</option>';
-  data.forEach((item, index) => {
-    const option = document.createElement("option");
-    option.value = index;
-    option.textContent = item.size;
-    sizeSelect.appendChild(option);
-  });
+  if (sizeSelect) {
+    sizeSelect.innerHTML = '<option value="">SELECT SIZE</option>';
+    data.forEach((item, index) => {
+      const option = document.createElement("option");
+      option.value = index;
+      option.textContent = item.size;
+      sizeSelect.appendChild(option);
+    });
+  }
 
   // ========================================================
   // LOGIKA UTAMA PERHITUNGAN MATEMATIKA QC
@@ -125,18 +127,18 @@ function initSizeDropdown(data) {
       const cartonToleransiKg = cartonToleransiGram / 1000;
 
       // Tempelkan hasil akhir ke masing-masing kolom teks form UI
-      calcOutputs.nettTarget.value = nettTarget.toFixed(2);
-      calcOutputs.nettMin.value = nettMin.toFixed(2);
-      calcOutputs.nettMax.value = nettMax.toFixed(2);
+      if (calcOutputs.nettTarget) calcOutputs.nettTarget.value = nettTarget.toFixed(2);
+      if (calcOutputs.nettMin) calcOutputs.nettMin.value = nettMin.toFixed(2);
+      if (calcOutputs.nettMax) calcOutputs.nettMax.value = nettMax.toFixed(2);
 
-      calcOutputs.grossTarget.value = grossTarget.toFixed(2);
-      calcOutputs.grossMin.value = grossMin.toFixed(2);
-      calcOutputs.grossMax.value = grossMax.toFixed(2);
+      if (calcOutputs.grossTarget) calcOutputs.grossTarget.value = grossTarget.toFixed(2);
+      if (calcOutputs.grossMin) calcOutputs.grossMin.value = grossMin.toFixed(2);
+      if (calcOutputs.grossMax) calcOutputs.grossMax.value = grossMax.toFixed(2);
 
-      calcOutputs.cartonTarget.value = cartonTargetKg.toFixed(3);
-      calcOutputs.cartonMin.value = cartonMinKg.toFixed(3);
-      calcOutputs.cartonMax.value = cartonMaxKg.toFixed(3);
-      calcOutputs.cartonToleransi.value = cartonToleransiKg.toFixed(3);
+      if (calcOutputs.cartonTarget) calcOutputs.cartonTarget.value = cartonTargetKg.toFixed(3);
+      if (calcOutputs.cartonMin) calcOutputs.cartonMin.value = cartonMinKg.toFixed(3);
+      if (calcOutputs.cartonMax) calcOutputs.cartonMax.value = cartonMaxKg.toFixed(3);
+      if (calcOutputs.cartonToleransi) calcOutputs.cartonToleransi.value = cartonToleransiKg.toFixed(3);
     } else {
       // Reset bersihkan form output jika data inputan belum lengkap
       Object.keys(calcOutputs).forEach((key) => {
@@ -146,32 +148,38 @@ function initSizeDropdown(data) {
   }
 
   // Event pemicu ketika pilihan jenis/ukuran produk diganti
-  sizeSelect.addEventListener("change", function () {
-    const selectedIndex = this.value;
+  if (sizeSelect) {
+    sizeSelect.addEventListener("change", function () {
+      const selectedIndex = this.value;
 
-    if (selectedIndex !== "") {
-      const selectedData = data[selectedIndex];
+      if (selectedIndex !== "") {
+        const selectedData = data[selectedIndex];
 
-      // Auto-fill field data numerik standar
-      Object.keys(inputs).forEach((key) => {
-        if (inputs[key] && key !== "note") {
-          inputs[key].value = selectedData[key] !== undefined ? selectedData[key] : "";
+        // Auto-fill field data numerik standar
+        Object.keys(inputs).forEach((key) => {
+          if (inputs[key] && key !== "note") {
+            inputs[key].value = selectedData[key] !== undefined ? selectedData[key] : "";
+          }
+        });
+
+        // Ambil teks string secara manual dari key '_note' di JSON Anda
+        if (inputs.note) {
+          inputs.note.value = selectedData._note !== undefined ? selectedData._note : "";
         }
-      });
-
-      // Ambil teks string secara manual dari key '_note' di JSON Anda
-      inputs.note.value = selectedData._note !== undefined ? selectedData._note : "";
-    } else {
-      // Kosongkan seluruh form jika select kembali ke default "SELECT SIZE"
-      Object.keys(inputs).forEach((key) => {
-        if (inputs[key]) inputs[key].value = "";
-      });
-    }
-    calculateWeights();
-  });
+      } else {
+        // Kosongkan seluruh form jika select kembali ke default "SELECT SIZE"
+        Object.keys(inputs).forEach((key) => {
+          if (inputs[key]) inputs[key].value = "";
+        });
+      }
+      calculateWeights();
+    });
+  }
 
   // Jalankan perhitungan ulang secara real-time saat angka density diketik manual
-  densityInput1.addEventListener("input", calculateWeights);
+  if (densityInput1) {
+    densityInput1.addEventListener("input", calculateWeights);
+  }
 }
 
 // ========================================================
@@ -190,93 +198,70 @@ function initScanButtons() {
   let html5Qrcode = null;
   let targetInput = null;
 
-function openScanner(inputElement, titleText) {
+  function openScanner(inputElement, titleText) {
+    targetInput = inputElement;
+    if (modalTitle) {
+      modalTitle.innerHTML = `<i data-lucide="scan-line" class="text-indigo-600 w-5 h-5"></i> ${titleText}`;
+    }
+    lucide.createIcons();
 
-  targetInput = inputElement;
+    if (modal) {
+      modal.classList.remove("hidden");
+      setTimeout(() => {
+        modal.classList.remove("opacity-0");
+      }, 50);
+    }
 
-  modalTitle.innerHTML =
-    `<i data-lucide="scan-line" class="text-indigo-600 w-5 h-5"></i> ${titleText}`;
+    const readerElem = document.getElementById("scanner-reader");
+    if (readerElem) readerElem.innerHTML = "";
 
-  lucide.createIcons();
+    html5Qrcode = new Html5Qrcode("scanner-reader");
 
-  modal.classList.remove("hidden");
+    Html5Qrcode.getCameras()
+      .then((devices) => {
+        if (!devices.length) {
+          alert("Kamera tidak ditemukan");
+          return;
+        }
 
-  setTimeout(() => {
-    modal.classList.remove("opacity-0");
-  }, 50);
-
-  document.getElementById("scanner-reader").innerHTML = "";
-
-  html5Qrcode = new Html5Qrcode("scanner-reader");
-
-  Html5Qrcode.getCameras()
-    .then((devices) => {
-
-      if (!devices.length) {
-        alert("Kamera tidak ditemukan");
-        return;
-      }
-
-      const camera =
-        devices.find(d =>
+        const camera = devices.find(d =>
           d.label.toLowerCase().includes("back") ||
           d.label.toLowerCase().includes("rear")
         ) || devices[0];
 
-      return html5Qrcode.start(
-        camera.id,
-        {
-          fps: 10,
-          qrbox: {
-            width: 280,
-            height: 160
+        return html5Qrcode.start(
+          camera.id,
+          {
+            fps: 10,
+            qrbox: { width: 280, height: 160 }
+          },
+          onScanSuccess,
+          onScanFailure
+        );
+      })
+      .then(() => {
+        setTimeout(() => {
+          const video = document.querySelector("#scanner-reader video");
+          if (video) {
+            video.style.width = "100%";
+            video.style.height = "auto";
+            video.style.display = "block";
+            video.style.objectFit = "cover";
           }
-        },
-        onScanSuccess,
-        onScanFailure
-      );
-
-    })
-    .then(() => {
-
-      setTimeout(() => {
-
-        const video =
-          document.querySelector("#scanner-reader video");
-
-        if (video) {
-
-          video.style.width = "100%";
-          video.style.height = "auto";
-          video.style.display = "block";
-          video.style.objectFit = "cover";
-
-        }
-
-      }, 1000);
-
-    })
-    .catch((err) => {
-
-      console.error(err);
-
-      alert("Kamera gagal diakses: " + err);
-
-      closeScanner();
-
-    });
-
-}
+        }, 1000);
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Kamera gagal diakses: " + err);
+        closeScanner();
+      });
+  }
 
   function closeScanner() {
     if (html5Qrcode) {
-      // Jika stream video kamera sedang menyala aktif, matikan terlebih dahulu
       if (html5Qrcode.isScanning) {
-        html5Qrcode
-          .stop()
-          .then(() => {
-            hideModalElements();
-          })
+        html5Qrcode.stop()
+          .then(() => { hideModalElements(); })
           .catch((err) => {
             console.error("Gagal mematikan stream video kamera:", err);
             hideModalElements();
@@ -290,39 +275,37 @@ function openScanner(inputElement, titleText) {
   }
 
   function hideModalElements() {
-    modal.classList.add("opacity-0");
-    setTimeout(() => {
-      modal.classList.add("hidden");
-      document.getElementById("scanner-reader").innerHTML = ""; // Bersihkan sisa elemen kamera
-    }, 300);
+    if (modal) {
+      modal.classList.add("opacity-0");
+      setTimeout(() => {
+        modal.classList.add("hidden");
+        const readerElem = document.getElementById("scanner-reader");
+        if (readerElem) readerElem.innerHTML = "";
+      }, 300);
+    }
   }
 
   function onScanSuccess(decodedText, decodedResult) {
     if (targetInput) {
-      targetInput.value = decodedText; // Masukkan teks hasil deteksi ke form text
-
-      // Beri indikasi visual kedipan hijau pertanda data berhasil masuk
+      targetInput.value = decodedText;
       targetInput.classList.add("bg-green-50", "border-green-400");
       setTimeout(() => {
         targetInput.classList.remove("bg-green-50", "border-green-400");
       }, 1000);
     }
-    closeScanner(); // Otomatis tutup kamera setelah sukses mendeteksi 1 barcode
+    closeScanner();
   }
 
   function onScanFailure(error) {
-    // Diabaikan karena scanning mencari frame kode berulang kali setiap milidetik secara konstan
+    // Diabaikan karena scanning berulang terus-menerus
   }
 
-  // Pasang event klik pada tombol pemicu scan
   if (btnScanPo) {
     btnScanPo.addEventListener("click", () => openScanner(inputScanPo, "Scan Barcode Nomer PO"));
   }
-
   if (btnScanBatch) {
     btnScanBatch.addEventListener("click", () => openScanner(inputScanBatch, "Scan Barcode Nomer Batch"));
   }
-
   if (btnClose) {
     btnClose.addEventListener("click", closeScanner);
   }
@@ -334,40 +317,57 @@ function openScanner(inputElement, titleText) {
 function initTabInteractions() {
   const tabs = document.querySelectorAll(".tab-btn");
   
-  // Daftarkan semua kontainer form dari HTML
   const formUtama = document.getElementById("form-qc-utama");
   const formMakanan = document.getElementById("form-qc-makanan");
   const formMinuman = document.getElementById("form-qc-minuman");
+  const actionButtons = document.getElementById("action-buttons-container");
+
+  // Render input grid dinamis Makanan di dalam JS agar rapi
+  const containerBotolCap = document.getElementById("container-botol-cap");
+  const containerBeratGross = document.getElementById("container-berat-gross");
+  
+  if (containerBotolCap || containerBeratGross) {
+    let htmlInputs = "";
+    for (let i = 1; i <= 10; i++) {
+      htmlInputs += `
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-bold text-indigo-700 underline">${i}</label>
+          <input type="number" step="0.01" placeholder="Input Density" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-300 transition shadow-sm" />
+        </div>
+      `;
+    }
+    if (containerBotolCap) containerBotolCap.innerHTML = htmlInputs;
+    if (containerBeratGross) containerBeratGross.innerHTML = htmlInputs;
+  }
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", function () {
       // 1. Reset visual state seluruh tab
       tabs.forEach((item) => {
-        item.classList.remove("text-indigo-800", "border-b-2", "border-indigo-800", "font-semibold", "-mb-[10px]", "px-1");
-        item.classList.add("text-slate-400");
+        item.className = "tab-btn hover:text-indigo-800 pb-2 text-slate-400 cursor-pointer";
       });
 
-      // 2. Set active state untuk tab yang diklik
-      this.classList.remove("text-slate-400");
-      this.classList.add("text-indigo-800", "border-b-2", "border-indigo-800", "font-semibold", "-mb-[10px]", "px-1");
+      // 2. Set active state untuk tab yang diklik (menggunakan sintaks bersih kelas string biasa)
+      this.className = "tab-btn text-indigo-800 border-b-2 border-indigo-800 pb-2 -mb-[10px] px-1 font-semibold cursor-pointer";
 
-      // 3. Logika penyembunyian halaman/form berdasarkan ID tombol tab
-      const tabId = this.id;
-
-      // Sembunyikan semua form terlebih dahulu (Reset default)
+      // 3. Sembunyikan semua kontainer form terlebih dahulu
       if (formUtama) formUtama.classList.add("hidden");
       if (formMakanan) formMakanan.classList.add("hidden");
       if (formMinuman) formMinuman.classList.add("hidden");
 
-      // Tampilkan form spesifik yang dipilih
+      // 4. Tampilkan form spesifik yang dipilih berdasarkan ID Tab
+      const tabId = this.id;
       if (tabId === "tab-semua") {
         if (formUtama) formUtama.classList.remove("hidden");
+        if (actionButtons) actionButtons.classList.remove("hidden");
       } else if (tabId === "tab-makanan") {
         if (formMakanan) formMakanan.classList.remove("hidden");
+        if (actionButtons) actionButtons.classList.remove("hidden");
       } else if (tabId === "tab-minuman") {
-        if (formMinuman) formMinuman.classList.remove("hidden"); // Munculkan form nitrogen
+        if (formMinuman) formMinuman.classList.remove("hidden");
+        if (actionButtons) actionButtons.classList.remove("hidden");
       } else if (tabId === "tab-snack") {
-        // Jika nanti ada form snack, tampilkan di sini
+        if (actionButtons) actionButtons.classList.add("hidden"); // Sembunyikan tombol jika halaman snack masih kosong
       }
     });
   });
