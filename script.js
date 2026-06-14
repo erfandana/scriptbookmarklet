@@ -331,16 +331,42 @@ function openScanner(inputElement, titleText) {
 // ========================================================
 // INTERAKSI DESAIN TABS
 // ========================================================
+// ========================================================
+// INTERAKSI DESAIN TABS & PERGANTIAN FORM
+// ========================================================
 function initTabInteractions() {
   const tabs = document.querySelectorAll(".tab-btn");
+  const formUtama = document.getElementById("form-qc-utama");
+  const formMakanan = document.getElementById("form-qc-makanan");
+
   tabs.forEach((tab) => {
     tab.addEventListener("click", function () {
+      // 1. Bersihkan semua style aktif dari semua tab
       tabs.forEach((item) => {
         item.classList.remove("text-indigo-800", "border-b-2", "border-indigo-800", "font-semibold", "-mb-[10px]", "px-1");
         item.classList.add("text-slate-400");
       });
+
+      // 2. Set style aktif pada tab yang sedang diklik
       this.classList.remove("text-slate-400");
       this.classList.add("text-indigo-800", "border-b-2", "border-indigo-800", "font-semibold", "-mb-[10px]", "px-1");
+
+      // 3. LOGIKA PERGANTIAN HALAMAN/FORM
+      const tabId = this.id;
+
+      if (tabId === "tab-makanan") {
+        // Jika klik tab Makanan -> Sembunyikan utama, munculkan makanan
+        if (formUtama) formUtama.classList.add("hidden");
+        if (formMakanan) formMakanan.classList.remove("hidden");
+      } else if (tabId === "tab-semua") {
+        // Jika klik tab Semua -> Munculkan utama, sembunyikan makanan
+        if (formUtama) formUtama.classList.remove("hidden");
+        if (formMakanan) formMakanan.classList.add("hidden");
+      } else {
+        // Untuk tab Minuman dan Snack (jika formnya belum dibuat, sembunyikan semua dulu)
+        if (formUtama) formUtama.classList.add("hidden");
+        if (formMakanan) formMakanan.classList.add("hidden");
+      }
     });
   });
 }
