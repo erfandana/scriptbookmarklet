@@ -87,20 +87,3 @@ select.form-input {
   text-underline-offset: 5px;
   text-decoration-color: #2e3b82;
 }
-#scanner-reader{
-    width:100% !important;
-    min-height:300px !important;
-    overflow:hidden !important;
-}
-
-#scanner-reader video{
-    width:100% !important;
-    height:auto !important;
-    display:block !important;
-    object-fit:cover !important;
-}
-
-#scanner-reader canvas{
-    width:100% !important;
-    height:auto !important;
-}
