@@ -8,243 +8,282 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
     <link rel="stylesheet" href="style.css" />
   </head>
   <body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden">
-    
     <aside class="sidebar w-20 bg-indigo-800 flex flex-col justify-between items-center py-6 text-white shrink-0">
       <div class="flex flex-col items-center gap-8 w-full">
         <div class="sidebar-icon-wrapper p-2 hover:bg-indigo-700 rounded-lg cursor-pointer transition">
-          <i data-lucide="store" class="w-7 h-7"></i>
+          <i data-lucide="milk" class="w-7 h-7"></i>
         </div>
+
         <div class="sidebar-icon-wrapper p-2 hover:bg-indigo-700 rounded-lg cursor-pointer transition">
-          <i data-lucide="badge-percent" class="w-6 h-6 opacity-80"></i>
-        </div>
-        <div class="sidebar-icon-wrapper p-2 hover:bg-indigo-700 rounded-lg cursor-pointer transition">
-          <i data-lucide="pie-chart" class="w-6 h-6 opacity-80"></i>
-        </div>
-        <div class="p-3 bg-indigo-600/50 border border-indigo-400/30 rounded-xl shadow-md cursor-pointer w-12 h-12 flex items-center justify-center">
-          <i data-lucide="settings" class="w-6 h-6"></i>
+          <i data-lucide="package" class="w-7 h-7"></i>
         </div>
       </div>
+
       <div class="sidebar-icon-wrapper p-2 hover:bg-indigo-700 rounded-lg cursor-pointer transition">
         <i data-lucide="log-out" class="w-6 h-6 opacity-80"></i>
       </div>
     </aside>
+    <main class="flex-1 bg-white pt-4 px-6 pb-6 overflow-y-auto relative mt-2 mx-4 mb-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between min-h-0">
+      <div class="space-y-4 flex-1 w-full">
+        <h1 class="text-2xl font-bold text-indigo-950 mb-6 tracking-wide">Auto Fill QC Inline ECSL Filling</h1>
 
-    <main class="flex-1 bg-white p-8 overflow-y-auto relative m-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between min-h-0">
-      
-      <div class="space-y-6 flex-1">
-        <button class="absolute top-6 right-6 text-indigo-900 hover:bg-slate-100 p-1.5 rounded-lg transition border border-indigo-900/20">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-
-        <h1 class="text-2xl font-bold text-indigo-950 mb-6 tracking-wide">Auto Fill QC Inline</h1>
-
-        <div class="flex gap-12 text-sm font-medium text-slate-400 mb-0 pb-2">
-          <button type="button" id="tab-semua" class="tab-btn text-indigo-800 border-b-2 border-indigo-800 pb-2 -mb-[10px] px-1 font-semibold cursor-pointer">Semua</button>
-          <button type="button" id="tab-makanan" class="tab-btn hover:text-indigo-800 pb-2 cursor-pointer">Makanan</button>
-          <button type="button" id="tab-minuman" class="tab-btn hover:text-indigo-800 pb-2 cursor-pointer">Minuman</button>
-          <button type="button" id="tab-snack" class="tab-btn hover:text-indigo-800 pb-2 cursor-pointer">Snack</button>
+        <div class="flex border-b border-slate-200 gap-6 mb-6 overflow-x-auto">
+          <button id="tab-kalibrasi" class="tab-btn text-indigo-800 border-b-2 border-indigo-800 pb-2 px-1 font-semibold cursor-pointer whitespace-nowrap">Kalibrasi</button>
+          <button id="tab-berat" class="tab-btn text-slate-400 border-b-2 border-transparent hover:text-indigo-800 pb-2 px-1 cursor-pointer whitespace-nowrap">Berat</button>
+          <button id="tab-nitrogen" class="tab-btn text-slate-400 border-b-2 border-transparent hover:text-indigo-800 pb-2 px-1 cursor-pointer whitespace-nowrap">Nitrogen</button>
         </div>
 
-        <form id="form-qc-utama" class="space-y-6 pt-4 border-t border-slate-300">
+        <form id="form-qc-utama" class="space-y-4 pt-4 w-full block">
           <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-            <div class="md:col-span-4 form-group">
-              <label class="form-label">Nomer PO</label>
+            <div class="md:col-span-4 flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Nomer PO</label>
               <div class="flex gap-3 relative">
-                <input type="text" id="input-scan-po" placeholder="Hasil Scan PO" class="form-input w-full px-3 py-2 border rounded-xl" />
-                <button type="button" id="btn-scan-po" class="px-4 py-2 bg-indigo-700 text-white rounded-xl shadow-md">Scan PO</button>
+                <input
+                  type="text"
+                  id="input-scan-po"
+                  placeholder="Hasil Scan PO"
+                  required
+                  class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+                <button type="button" id="btn-scan-po" class="px-4 py-2 bg-indigo-700 text-white rounded-xl shadow-md whitespace-nowrap">Scan PO</button>
               </div>
             </div>
 
-            <div class="md:col-span-4 form-group">
-              <label class="form-label">Nomer Batch</label>
+            <div class="md:col-span-4 flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Nomer Batch</label>
               <div class="flex gap-3 relative">
-                <input type="text" id="input-scan-batch" placeholder="Hasil Scan Batch" class="form-input w-full px-3 py-2 border rounded-xl" />
-                <button type="button" id="btn-scan-batch" class="px-4 py-2 bg-indigo-700 text-white rounded-xl shadow-md">Scan Batch</button>
+                <input
+                  type="text"
+                  id="input-scan-batch"
+                  placeholder="Hasil Scan Batch"
+                  required
+                  class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+                <button type="button" id="btn-scan-batch" class="px-4 py-2 bg-indigo-700 text-white rounded-xl shadow-md whitespace-nowrap">Scan Batch</button>
               </div>
             </div>
 
-            <div class="md:col-span-4 form-group">
-              <label class="form-label">Pilih Size</label>
-              <select id="size-select" class="w-full px-3 py-2 border rounded-xl appearance-none bg-no-repeat bg-right pr-8">
+            <div class="md:col-span-4 flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Pilih Size</label>
+              <select
+                id="size-select"
+                required
+                class="w-full px-3 py-2 border rounded-xl appearance-none bg-no-repeat bg-right pr-8 bg-white border-slate-300 invalid:border-red-500 invalid:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              >
+                <option value="" disabled selected hidden>SELECT SIZE</option>
                 <option value="">SELECT SIZE</option>
               </select>
             </div>
           </div>
 
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div class="form-group">
-              <label class="form-label">Density</label>
-              <input type="number" step="0.001" id="input-density-1" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl" />
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Density</label>
+              <input
+                type="number"
+                step="0.001"
+                id="input-density-1"
+                placeholder="0.000"
+                required
+                class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
             </div>
-            <div class="form-group">
-              <label class="form-label">Toleransi</label>
-              <input type="text" id="input-toleransi" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Toleransi</label>
+              <input type="text" id="input-toleransi" class="w-full px-3 py-2 border rounded-xl bg-slate-50 text-slate-500 border-slate-200" readonly />
             </div>
-            <div class="form-group">
-              <label class="form-label">Botol</label>
-              <input type="text" id="input-botol" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Botol</label>
+              <input
+                type="text"
+                id="input-botol"
+                placeholder="0.00"
+                required
+                class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
             </div>
-            <div class="form-group">
-              <label class="form-label">Cap</label>
-              <input type="text" id="input-cap" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Cap</label>
+              <input
+                type="text"
+                id="input-cap"
+                placeholder="0.00"
+                required
+                class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
             </div>
           </div>
 
           <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
-            <div class="form-group">
-              <label class="form-label">Label</label>
-              <input type="text" id="input-label" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Label</label>
+              <input
+                type="text"
+                id="input-label"
+                placeholder="0.00"
+                required
+                class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
             </div>
-            <div class="form-group">
-              <label class="form-label">Folding</label>
-              <input type="text" id="input-folding" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Folding</label>
+              <input
+                type="text"
+                id="input-folding"
+                placeholder="0.00"
+                required
+                class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
             </div>
-            <div class="form-group">
-              <label class="form-label">Layer</label>
-              <input type="text" id="input-layer" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Layer</label>
+              <input
+                type="text"
+                id="input-layer"
+                placeholder="0.00"
+                required
+                class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
             </div>
-            <div class="form-group">
-              <label class="form-label">Carton</label>
-              <input type="text" id="input-carton" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Carton</label>
+              <input
+                type="text"
+                id="input-carton"
+                placeholder="0.00"
+                required
+                class="w-full px-3 py-2 border rounded-xl bg-white border-slate-300 placeholder-shown:border-red-500 placeholder-shown:bg-red-50/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
             </div>
-            <div class="form-group">
-              <label class="form-label">Note</label>
-              <input type="text" id="input-note" placeholder="Input Note" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+
+            <div class="flex flex-col gap-1">
+              <label class="text-sm font-semibold text-slate-600">Note</label>
+              <input type="text" id="input-note" class="w-full px-3 py-2 border rounded-xl bg-slate-50 text-slate-500 border-slate-200" readonly />
             </div>
           </div>
 
-          <div class="pb-6 border-b border-slate-300">
-            <h3 class="font-bold text-slate-700 mb-2">Berat Nett Pcs (Gram)</h3>
+          <div class="pb-6 border-b border-slate-200">
+            <h3 class="font-bold text-slate-700 mb-3">Berat Nett Pcs (Gram)</h3>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
-              <div class="form-group">
-                <label class="form-label">Target</label>
-                <input type="text" id="nett-target" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl font-semibold bg-slate-50" readonly />
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-semibold text-slate-600">Target</label>
+                <input type="text" id="nett-target" class="w-full px-3 py-2 border rounded-xl font-bold bg-slate-50 text-indigo-950 border-slate-200" readonly />
               </div>
-              <div class="form-group">
-                <label class="form-label">Minimum</label>
-                <input type="text" id="nett-min" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-semibold text-slate-600">Minimum</label>
+                <input type="text" id="nett-min" class="w-full px-3 py-2 border rounded-xl bg-slate-50 text-slate-500 border-slate-200" readonly />
               </div>
-              <div class="form-group">
-                <label class="form-label">Maximum</label>
-                <input type="text" id="nett-max" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-semibold text-slate-600">Maximum</label>
+                <input type="text" id="nett-max" class="w-full px-3 py-2 border rounded-xl bg-slate-50 text-slate-500 border-slate-200" readonly />
               </div>
             </div>
           </div>
 
-          <div class="pb-6 border-b border-slate-300">
-            <h3 class="font-bold text-slate-700 mb-2">Berat Gross Pcs (Gram)</h3>
+          <div class="pb-6 border-b border-slate-200">
+            <h3 class="font-bold text-slate-700 mb-3">Berat Gross Pcs (Gram)</h3>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
-              <div class="form-group">
-                <label class="form-label">Target</label>
-                <input type="text" id="gross-target" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl font-semibold bg-slate-50" readonly />
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-semibold text-slate-600">Target</label>
+                <input type="text" id="gross-target" class="w-full px-3 py-2 border rounded-xl font-bold bg-slate-50 text-indigo-950 border-slate-200" readonly />
               </div>
-              <div class="form-group">
-                <label class="form-label">Minimum</label>
-                <input type="text" id="gross-min" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-semibold text-slate-600">Minimum</label>
+                <input type="text" id="gross-min" class="w-full px-3 py-2 border rounded-xl bg-slate-50 text-slate-500 border-slate-200" readonly />
               </div>
-              <div class="form-group">
-                <label class="form-label">Maximum</label>
-                <input type="text" id="gross-max" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-semibold text-slate-600">Maximum</label>
+                <input type="text" id="gross-max" class="w-full px-3 py-2 border rounded-xl bg-slate-50 text-slate-500 border-slate-200" readonly />
               </div>
             </div>
           </div>
 
           <div class="pb-4">
-            <h3 class="font-bold text-slate-700 mb-2">Berat Gross Carton (Kg)</h3>
+            <h3 class="font-bold text-slate-700 mb-3">Berat Gross Carton (Kg)</h3>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl">
-              <div class="form-group">
-                <label class="form-label">Target</label>
-                <input type="text" id="carton-target" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl font-semibold bg-slate-50" readonly />
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-semibold text-slate-600">Target</label>
+                <input type="text" id="carton-target" class="w-full px-3 py-2 border rounded-xl font-bold bg-slate-50 text-indigo-950 border-slate-200" readonly />
               </div>
-              <div class="form-group">
-                <label class="form-label">Minimum</label>
-                <input type="text" id="carton-min" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-semibold text-slate-600">Minimum</label>
+                <input type="text" id="carton-min" class="w-full px-3 py-2 border rounded-xl bg-slate-50 text-slate-500 border-slate-200" readonly />
               </div>
-              <div class="form-group">
-                <label class="form-label">Maximum</label>
-                <input type="text" id="carton-max" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-semibold text-slate-600">Maximum</label>
+                <input type="text" id="carton-max" class="w-full px-3 py-2 border rounded-xl bg-slate-50 text-slate-500 border-slate-200" readonly />
               </div>
-              <div class="form-group">
-                <label class="form-label">Toleransi</label>
-                <input type="text" id="carton-toleransi" placeholder="Input Density" class="w-full px-3 py-2 border rounded-xl bg-slate-50" readonly />
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-semibold text-slate-600">Toleransi</label>
+                <input type="text" id="carton-toleransi" class="w-full px-3 py-2 border rounded-xl bg-slate-50 text-slate-500 border-slate-200" readonly />
               </div>
             </div>
           </div>
         </form>
 
-        <div id="form-qc-makanan" class="space-y-8 pt-6 border-t border-slate-300 hidden">
+        <div id="form-qc-makanan" class="space-y-8 pt-4 w-full hidden">
           <div>
-            <h3 class="text-xl font-bold text-indigo-900 tracking-wide mb-1">Berat Botol dan Cap (Gram)</h3>
-            <button type="button" class="px-6 py-2 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-medium rounded-lg shadow-sm mb-4 transition">Import</button>
-            <div id="container-botol-cap" class="grid grid-cols-2 sm:grid-cols-5 gap-4"></div>
+            <h3 class="text-lg font-bold text-indigo-900 tracking-wide mb-1">Berat Botol dan Cap (Gram)</h3>
+            <div class="flex items-center gap-3 mb-4">
+              <label class="px-6 py-2 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-medium rounded-lg shadow-sm transition cursor-pointer text-center shrink-0">
+                <span>Import Image</span>
+                <input type="file" id="import-botol-cap" accept="image/*" class="hidden" />
+              </label>
+              <span id="file-name-label" class="text-sm text-slate-400 italic font-medium truncate max-w-xs"> Belum ada file terpilih </span>
+            </div>
+            <div id="container-botol-cap" class="grid grid-cols-2 sm:grid-cols-5 gap-4 w-full"></div>
           </div>
 
           <hr class="border-slate-200 my-6" />
 
           <div>
-            <h3 class="text-xl font-bold text-indigo-900 tracking-wide mb-1">Berat Gross (Gram)</h3>
-            <button type="button" class="px-6 py-2 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-medium rounded-lg shadow-sm mb-4 transition">Import</button>
-            <div id="container-berat-gross" class="grid grid-cols-2 sm:grid-cols-5 gap-4"></div>
-          </div>
-        </div>
-
-        <div id="form-qc-minuman" class="space-y-6 pt-6 border-t border-slate-300 hidden">
-          <div>
-            <h3 class="text-xl font-bold text-indigo-900 tracking-wide mb-1 underline decoration-2 underline-offset-4">
-              Hasil Pengecekan Nitrogen
-            </h3>
-            
-            <button type="button" class="px-6 py-2 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-medium rounded-lg shadow-md mb-6 transition focus:ring-2 focus:ring-indigo-500/50">
-              Import
-            </button>
-
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-              <div class="flex flex-col gap-1">
-                <label class="text-sm font-bold text-indigo-700 underline">1</label>
-                <input type="number" step="0.01" placeholder="Input Density" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-200 transition shadow-sm" />
-              </div>
-              <div class="flex flex-col gap-1">
-                <label class="text-sm font-bold text-indigo-700 underline">2</label>
-                <input type="number" step="0.01" placeholder="Input Density" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-200 transition shadow-sm" />
-              </div>
-              <div class="flex flex-col gap-1">
-                <label class="text-sm font-bold text-indigo-700 underline">3</label>
-                <input type="number" step="0.01" placeholder="Input Density" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-200 transition shadow-sm" />
-              </div>
-              <div class="flex flex-col gap-1">
-                <label class="text-sm font-bold text-indigo-700 underline">4</label>
-                <input type="number" step="0.01" placeholder="Input Density" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-200 transition shadow-sm" />
-              </div>
-              <div class="flex flex-col gap-1">
-                <label class="text-sm font-bold text-indigo-700 underline">5</label>
-                <input type="number" step="0.01" placeholder="Input Density" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-200 transition shadow-sm" />
-              </div>
+            <h3 class="text-lg font-bold text-indigo-900 tracking-wide mb-1">Berat Gross (Gram)</h3>
+            <div class="flex items-center gap-3 mb-4">
+              <label class="px-6 py-2 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-medium rounded-lg shadow-sm transition cursor-pointer text-center shrink-0">
+                <span>Import Image</span>
+                <input type="file" id="import-berat-gross" accept="image/*" class="hidden" />
+              </label>
+              <span id="file-name-gross-label" class="text-sm text-slate-400 italic font-medium truncate max-w-xs"> Belum ada file terpilih </span>
             </div>
+            <div id="container-berat-gross" class="grid grid-cols-2 sm:grid-cols-5 gap-4 w-full"></div>
           </div>
         </div>
 
+        <div id="form-qc-minuman" class="space-y-4 pt-4 w-full hidden">
+          <div>
+            <h3 class="text-lg font-bold text-indigo-900 tracking-wide mb-1">Hasil Pengecekan Nitrogen</h3>
+            <div class="flex items-center gap-3 mb-4">
+              <label class="px-6 py-2 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-medium rounded-lg shadow-sm transition cursor-pointer text-center shrink-0">
+                <span>Import Image</span>
+                <input type="file" id="import-nitrogen" accept="image/*" class="hidden" />
+              </label>
+              <span id="file-name-nitrogen-label" class="text-sm text-slate-400 italic font-medium truncate max-w-xs"> Belum ada file terpilih </span>
+            </div>
+            <div id="container-nitrogen" class="grid grid-cols-2 sm:grid-cols-5 gap-4 w-full"></div>
+          </div>
+        </div>
       </div>
 
-      <div id="action-buttons-container" class="pt-6 mt-6 border-t border-slate-100 flex justify-end gap-4 bg-white">
-        <button type="button" class="px-8 py-2.5 border border-indigo-700 text-indigo-700 hover:bg-slate-50 text-sm font-semibold rounded-xl transition shadow-sm">
-          Clear
-        </button>
-        <button type="submit" class="px-8 py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-indigo-200">
-          Kirim
-        </button>
+      <div id="action-buttons-container" class="pt-6 mt-6 border-t border-slate-100 flex justify-end gap-4 bg-white w-full hidden">
+        <button type="button" class="px-8 py-2.5 border border-indigo-700 text-indigo-700 hover:bg-slate-50 text-sm font-semibold rounded-xl transition shadow-sm">Clear</button>
+        <button type="submit" class="px-8 py-2.5 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-semibold rounded-xl transition shadow-lg shadow-indigo-200">Kirim</button>
       </div>
-
     </main>
 
     <div id="scanner-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
       <div class="bg-white p-6 rounded-2xl max-w-md w-full mx-4 shadow-2xl relative">
-        <h3 id="scanner-title" class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-          Scan Barcode
-        </h3>
+        <h3 id="scanner-title" class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">Log In Barcode</h3>
         <div id="scanner-reader" class="overflow-hidden rounded-xl bg-slate-100 border border-slate-200" style="width: 100%"></div>
         <button type="button" id="btn-close-scanner" class="mt-4 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition">Batal / Tutup Kamera</button>
       </div>
