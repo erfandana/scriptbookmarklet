@@ -1,54 +1,55 @@
 (function () {
-  // 1. Ambil database packaging langsung dari Raw GitHub kamu
-  const JSON_URL = "https://raw.githubusercontent.com/username-kamu/repo-baru-kamu/main/packaging.json";
+  // 1. LINK RAW JSON KAMU (Sesuaikan jika nama reponya berbeda)
+  const JSON_URL = "https://raw.githubusercontent.com/erfandana/scriptbookmarklet/refs/heads/main/packaging.json?t=" + Date.now();
 
   fetch(JSON_URL)
     .then((response) => {
-      if (!response.ok) throw new Error("Gagal mengambil data JSON.");
+      if (!response.ok) throw new Error("Gagal mengambil data JSON dari GitHub.");
       return response.json();
     })
     .then((data) => {
-      runAutofillLogic(data);
+      eksekusiAutofill(data);
     })
     .catch((error) => {
-      console.error("Error Bookmarklet:", error);
-      alert("Gagal memuat database material dari GitHub.");
+      console.error("Error:", error);
+      alert("Gagal memuat database QC dari GitHub: " + error.message);
     });
 
-  function runAutofillLogic(data) {
+  function eksekusiAutofill(database) {
     // =========================================================================
-    // PENTING: Ganti string ID di bawah ini dengan ID ASLI yang ada di web target!
+    // ⚠️ PENTING: GANTI ID DI BAWAH INI DENGAN ID ASLI YANG ADA DI WEB TARGET!
     // =========================================================================
-    const webSelectSize   = document.getElementById("id_select_size_di_web_target");
-    const webInputDensity = document.getElementById("id_input_density_di_web_target");
+    const webSelectSize   = document.getElementById("ISI_DENGAN_ID_SELECT_SIZE_DI_WEB_TARGET");
+    const webInputDensity = document.getElementById("ISI_DENGAN_ID_INPUT_DENSITY_DI_WEB_TARGET");
     
-    // Pemetaan elemen output pada web target
+    // Pemetaan elemen output/hasil hitung di halaman web target
     const webOutputs = {
-      nettTarget:      document.getElementById("id_nett_target_di_web"),
-      nettMin:         document.getElementById("id_nett_min_di_web"),
-      nettMax:         document.getElementById("id_nett_max_di_web"),
-      grossTarget:     document.getElementById("id_gross_target_di_web"),
-      grossMin:        document.getElementById("id_gross_min_di_web"),
-      grossMax:        document.getElementById("id_gross_max_di_web"),
-      cartonTarget:    document.getElementById("id_carton_target_di_web"),
-      cartonMin:       document.getElementById("id_carton_min_di_web"),
-      cartonMax:       document.getElementById("id_carton_max_di_web"),
-      cartonToleransi: document.getElementById("id_carton_toleransi_di_web"),
+      nettTarget:      document.getElementById("ISI_ID_NET_TARGET_DI_WEB"),
+      nettMin:         document.getElementById("ISI_ID_NET_MIN_DI_WEB"),
+      nettMax:         document.getElementById("ISI_ID_NET_MAX_DI_WEB"),
+      grossTarget:     document.getElementById("ISI_ID_GROSS_TARGET_DI_WEB"),
+      grossMin:        document.getElementById("ISI_ID_GROSS_MIN_DI_WEB"),
+      grossMax:        document.getElementById("ISI_ID_GROSS_MAX_DI_WEB"),
+      cartonTarget:    document.getElementById("ISI_ID_CARTON_TARGET_DI_WEB"),
+      cartonMin:       document.getElementById("ISI_ID_CARTON_MIN_DI_WEB"),
+      cartonMax:       document.getElementById("ISI_ID_CARTON_MAX_DI_WEB"),
+      cartonToleransi: document.getElementById("ISI_ID_CARTON_TOLERANSI_DI_WEB"),
     };
 
+    // Validasi apakah bookmarklet dijalankan di halaman yang benar
     if (!webSelectSize || !webInputDensity) {
-      alert("Bookmarklet tidak mendeteksi form input yang sesuai di halaman ini!");
+      alert("Tombol autofill aktif, tetapi input Size atau Density tidak ditemukan di halaman ini. Periksa kembali ID elemennya!");
       return;
     }
 
-    // Fungsi hitung kalkulasi matematis (diadopsi dari logika QC kamu)
-    function calculate() {
-      // Mengasumsikan value dari select di web target berupa text ukuran (misal: "100 X 20ML")
-      const selectedSizeText = webSelectSize.value; 
-      const selectedData = data.find(item => item.size === selectedSizeText);
+    // Fungsi Kalkulasi QC
+    function hitungOtomatis() {
+      const selectedSizeText = webSelectSize.value; // Mengambil text ukuran (misal: "100 X 20ML")
+      const selectedData = database.find(item => item.size === selectedSizeText);
       const density = parseFloat(webInputDensity.value) || 0;
 
       if (selectedData && density > 0) {
+        // Ambil nilai spesifikasi dasar dari JSON
         const volume = selectedData.volume || 0;
         const isi = selectedData.isi || 0;
         const botol = selectedData.botol || 0;
@@ -59,20 +60,19 @@
         const layer = selectedData.layer || 0;
         const toleransi = selectedData.toleransi || 0;
 
-        // 1. HITUNG BERAT NETT PCS
+        // 1. Hitung Nett Pcs
         const nettTarget = volume * density;
         const nettMin = nettTarget - toleransi;
         const nettMax = nettTarget + toleransi;
 
-        // 2. HITUNG BERAT GROSS PCS
+        // 2. Hitung Gross Pcs
         const grossTarget = nettTarget + botol + cap;
         const grossMin = nettMin + botol + cap;
         const grossMax = nettMax + botol + cap;
 
-        // 3. HITUNG BERAT GROSS CARTON
+        // 3. Hitung Gross Carton (Gram)
         const aksesorisKardus = layer + cartonPackaging;
         const aksesorisBotol = isi * (label + folding);
-
         const cartonTargetGram = grossTarget * isi + aksesorisKardus + aksesorisBotol;
         const cartonMaxGram = grossMax * isi + aksesorisKardus + aksesorisBotol;
 
@@ -87,13 +87,13 @@
           cartonToleransiGram = cartonMaxGram - cartonTargetGram;
         }
 
-        // 4. KONVERSI KE KG
+        // 4. Konversi ke Kilogram (Kg)
         const cartonTargetKg = cartonTargetGram / 1000;
         const cartonMinKg = cartonMinGram / 1000;
         const cartonMaxKg = cartonMaxGram / 1000;
         const cartonToleransiKg = cartonToleransiGram / 1000;
 
-        // Masukkan nilai hasil hitungan ke input field web target
+        // Tembakkan langsung ke form input web target
         if(webOutputs.nettTarget) webOutputs.nettTarget.value = nettTarget.toFixed(2);
         if(webOutputs.nettMin) webOutputs.nettMin.value = nettMin.toFixed(2);
         if(webOutputs.nettMax) webOutputs.nettMax.value = nettMax.toFixed(2);
@@ -107,19 +107,19 @@
         if(webOutputs.cartonMax) webOutputs.cartonMax.value = cartonMaxKg.toFixed(3);
         if(webOutputs.cartonToleransi) webOutputs.cartonToleransi.value = cartonToleransiKg.toFixed(3);
         
-        // Trigger event 'input' atau 'change' manual jika web target menggunakan framework (React/Vue)
+        // Opsional: Trigger event agar sistem web target tahu ada perubahan data (berguna jika web target pakai React/Vue)
         Object.values(webOutputs).forEach(el => {
           if(el) el.dispatchEvent(new Event('input', { bubbles: true }));
         });
       }
     }
 
-    // Pasang listener agar web target otomatis menghitung saat user mengganti isi form
-    webSelectSize.addEventListener("change", calculate);
-    webInputDensity.addEventListener("input", calculate);
+    // Daftarkan event listener di web target supaya begitu user input Density / ganti Size, angka langsung re-calculate otomatis
+    webSelectSize.addEventListener("change", hitungOtomatis);
+    webInputDensity.addEventListener("input", hitungOtomatis);
     
-    // Jalankan sekali di awal eksekusi bookmarklet
-    calculate();
-    alert("Bookmarklet QC Inline berhasil diaktifkan pada halaman ini!");
+    // Jalankan kalkulasi pertama kali saat bookmarklet di-klik
+    hitungOtomatis();
+    alert("Kalkulator QC Inline Berhasil Disuntikkan!");
   }
 })();
