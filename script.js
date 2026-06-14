@@ -190,35 +190,83 @@ function initScanButtons() {
   let html5Qrcode = null;
   let targetInput = null;
 
-  function openScanner(inputElement, titleText) {
-    targetInput = inputElement;
-    modalTitle.innerHTML = `<i data-lucide="scan-line" class="text-indigo-600 w-5 h-5"></i> ${titleText}`;
-    lucide.createIcons();
+function openScanner(inputElement, titleText) {
 
-    // Munculkan jendela modal melayang dengan efek fade-in
-    modal.classList.remove("hidden");
-    setTimeout(() => {
-      modal.classList.remove("opacity-0");
-    }, 50);
+  targetInput = inputElement;
 
-    // Inisialisasi engine scanner pada div pembaca kamera
-    html5Qrcode = new Html5Qrcode("scanner-reader");
+  modalTitle.innerHTML =
+    `<i data-lucide="scan-line" class="text-indigo-600 w-5 h-5"></i> ${titleText}`;
 
-    const config = {
-      fps: 20,
-      qrbox: { width: 280, height: 160 },
-      experimentalFeatures: {
-        useBarCodeDetectorIfSupported: true, // Maksimalkan akurasi deteksi kode batangan 1D
-      },
-    };
+  lucide.createIcons();
 
-    // LANGSUNG MENYALAKAN KAMERA BELAKANG PERANGKAT ("environment")
-    html5Qrcode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure).catch((err) => {
-      console.error("Gagal mengakses hardware kamera belakang:", err);
-      alert("Kamera tidak dapat diakses. Pastikan izin kamera aktif dan aplikasi dibuka lewat localhost atau link HTTPS.");
+  modal.classList.remove("hidden");
+
+  setTimeout(() => {
+    modal.classList.remove("opacity-0");
+  }, 50);
+
+  document.getElementById("scanner-reader").innerHTML = "";
+
+  html5Qrcode = new Html5Qrcode("scanner-reader");
+
+  Html5Qrcode.getCameras()
+    .then((devices) => {
+
+      if (!devices.length) {
+        alert("Kamera tidak ditemukan");
+        return;
+      }
+
+      const camera =
+        devices.find(d =>
+          d.label.toLowerCase().includes("back") ||
+          d.label.toLowerCase().includes("rear")
+        ) || devices[0];
+
+      return html5Qrcode.start(
+        camera.id,
+        {
+          fps: 10,
+          qrbox: {
+            width: 280,
+            height: 160
+          }
+        },
+        onScanSuccess,
+        onScanFailure
+      );
+
+    })
+    .then(() => {
+
+      setTimeout(() => {
+
+        const video =
+          document.querySelector("#scanner-reader video");
+
+        if (video) {
+
+          video.style.width = "100%";
+          video.style.height = "auto";
+          video.style.display = "block";
+          video.style.objectFit = "cover";
+
+        }
+
+      }, 1000);
+
+    })
+    .catch((err) => {
+
+      console.error(err);
+
+      alert("Kamera gagal diakses: " + err);
+
       closeScanner();
+
     });
-  }
+
+}
 
   function closeScanner() {
     if (html5Qrcode) {
