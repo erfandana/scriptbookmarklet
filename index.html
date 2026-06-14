@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auto Fill QC Inline</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden">
+    <aside class="sidebar w-20 bg-indigo-800 flex flex-col justify-between items-center py-6 text-white shrink-0">
+      <div class="flex flex-col items-center gap-8 w-full">
+        <div class="sidebar-icon-wrapper p-2 hover:bg-indigo-700 rounded-lg cursor-pointer transition">
+          <i data-lucide="store" class="w-7 h-7"></i>
+        </div>
+        <div class="sidebar-icon-wrapper p-2 hover:bg-indigo-700 rounded-lg cursor-pointer transition">
+          <i data-lucide="badge-percent" class="w-6 h-6 opacity-80"></i>
+        </div>
+        <div class="sidebar-icon-wrapper p-2 hover:bg-indigo-700 rounded-lg cursor-pointer transition">
+          <i data-lucide="pie-chart" class="w-6 h-6 opacity-80"></i>
+        </div>
+        <div class="p-3 bg-indigo-600/50 border border-indigo-400/30 rounded-xl shadow-md cursor-pointer w-12 h-12 flex items-center justify-center">
+          <i data-lucide="settings" class="w-6 h-6"></i>
+        </div>
+      </div>
+      <div class="sidebar-icon-wrapper p-2 hover:bg-indigo-700 rounded-lg cursor-pointer transition">
+        <i data-lucide="log-out" class="w-6 h-6 opacity-80"></i>
+      </div>
+    </aside>
+
+    <main class="flex-1 bg-white p-8 overflow-y-auto relative m-4 rounded-2xl shadow-sm border border-slate-100">
+      <button class="absolute top-6 right-6 text-indigo-900 hover:bg-slate-100 p-1.5 rounded-lg transition border border-indigo-900/20">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h1 class="text-2xl font-bold text-indigo-950 mb-6 tracking-wide">Auto Fill QC Inline</h1>
+
+      <div class="flex gap-12 text-sm font-medium text-slate-400 mb-0 pb-2">
+        <button class="tab-btn text-indigo-800 border-b-2 border-indigo-800 pb-2 -mb-[10px] px-1 font-semibold">Semua</button>
+        <button class="tab-btn hover:text-indigo-800 pb-2">Makanan</button>
+        <button class="tab-btn hover:text-indigo-800 pb-2">Minuman</button>
+        <button class="tab-btn hover:text-indigo-800 pb-2">Snack</button>
+      </div>
+
+      <form class="space-y-6 pt-4 border-t border-slate-300">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+          <div class="md:col-span-4 form-group">
+            <label class="form-label">Nomer PO</label>
+            <div class="flex gap-3 relative">
+              <input type="text" id="input-scan-po" placeholder="Hasil Scan PO" class="form-input" />
+              <button type="button" id="btn-scan-po" class="btn btn-scan shadow-indigo-200 shadow-md">Scan PO</button>
+            </div>
+          </div>
+
+          <div class="md:col-span-4 form-group">
+            <label class="form-label">Nomer Batch</label>
+            <div class="flex gap-3 relative">
+              <input type="text" id="input-scan-batch" placeholder="Hasil Scan Batch" class="form-input" />
+              <button type="button" id="btn-scan-batch" class="btn btn-scan shadow-indigo-200 shadow-md">Scan Batch</button>
+            </div>
+          </div>
+
+          <div class="md:col-span-4 form-group">
+            <label class="form-label">Pilih Size</label>
+            <select id="size-select" class="form-input appearance-none bg-no-repeat bg-right pr-8">
+              <option value="">SELECT SIZE</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div class="form-group">
+            <label class="form-label">Density</label>
+            <input type="number" step="0.001" id="input-density-1" placeholder="Input Density" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Toleransi</label>
+            <input type="text" id="input-toleransi" placeholder="Auto" class="form-input" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Botol</label>
+            <input type="text" id="input-botol" placeholder="Auto" class="form-input" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cap</label>
+            <input type="text" id="input-cap" placeholder="Auto" class="form-input" readonly />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+          <div class="form-group">
+            <label class="form-label">Label</label>
+            <input type="text" id="input-label" placeholder="Auto" class="form-input" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Folding</label>
+            <input type="text" id="input-folding" placeholder="Auto" class="form-input" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Layer</label>
+            <input type="text" id="input-layer" placeholder="Auto" class="form-input" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Carton</label>
+            <input type="text" id="input-carton" placeholder="Auto" class="form-input" readonly />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Note</label>
+            <input type="text" id="input-note" placeholder="Note" class="form-input" readonly />
+          </div>
+        </div>
+
+        <div class="pb-6 border-b border-slate-300">
+          <h3 class="section-title">Berat Nett Pcs (Gram)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
+            <div class="form-group">
+              <label class="form-label">Target</label>
+              <input type="text" id="nett-target" placeholder="Hasil Hitung" class="form-input font-semibold" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Minimum</label>
+              <input type="text" id="nett-min" placeholder="Hasil Hitung" class="form-input" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Maximum</label>
+              <input type="text" id="nett-max" placeholder="Hasil Hitung" class="form-input" readonly />
+            </div>
+          </div>
+        </div>
+
+        <div class="pb-6 border-b border-slate-300">
+          <h3 class="section-title">Berat Gross Pcs (Gram)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
+            <div class="form-group">
+              <label class="form-label">Target</label>
+              <input type="text" id="gross-target" placeholder="Hasil Hitung" class="form-input font-semibold" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Minimum</label>
+              <input type="text" id="gross-min" placeholder="Hasil Hitung" class="form-input" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Maximum</label>
+              <input type="text" id="gross-max" placeholder="Hasil Hitung" class="form-input" readonly />
+            </div>
+          </div>
+        </div>
+
+        <div class="pb-4">
+          <h3 class="section-title">Berat Gross Carton (Kg)</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl">
+            <div class="form-group">
+              <label class="form-label">Target</label>
+              <input type="text" id="carton-target" placeholder="Hasil Hitung" class="form-input font-semibold" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Minimum</label>
+              <input type="text" id="carton-min" placeholder="Hasil Hitung" class="form-input" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Maximum</label>
+              <input type="text" id="carton-max" placeholder="Hasil Hitung" class="form-input" readonly />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Toleransi</label>
+              <input type="text" id="carton-toleransi" placeholder="Hasil Hitung" class="form-input" readonly />
+            </div>
+          </div>
+        </div>
+      </form>
+    </main>
+
+    <div id="scanner-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+      <div class="bg-white p-6 rounded-2xl max-w-md w-full mx-4 shadow-2xl relative">
+        <h3 id="scanner-title" class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <i data-lucide="scan-line" class="text-indigo-600 w-5 h-5"></i>
+          Scan Barcode
+        </h3>
+        <div id="scanner-reader" class="overflow-hidden rounded-xl bg-slate-100 border border-slate-200" style="width: 100%"></div>
+        <button type="button" id="btn-close-scanner" class="mt-4 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition">Batal / Tutup Kamera</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
