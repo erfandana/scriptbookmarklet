@@ -40,13 +40,13 @@
       <h1 class="text-2xl font-bold text-indigo-950 mb-6 tracking-wide">Auto Fill QC Inline</h1>
 
       <div class="flex gap-12 text-sm font-medium text-slate-400 mb-0 pb-2">
-        <button class="tab-btn text-indigo-800 border-b-2 border-indigo-800 pb-2 -mb-[10px] px-1 font-semibold">Semua</button>
-        <button class="tab-btn hover:text-indigo-800 pb-2">Makanan</button>
-        <button class="tab-btn hover:text-indigo-800 pb-2">Minuman</button>
-        <button class="tab-btn hover:text-indigo-800 pb-2">Snack</button>
+        <button type="button" id="tab-semua" class="tab-btn text-indigo-800 border-b-2 border-indigo-800 pb-2 -mb-[10px] px-1 font-semibold">Semua</button>
+        <button type="button" id="tab-makanan" class="tab-btn hover:text-indigo-800 pb-2">Makanan</button>
+        <button type="button" id="tab-minuman" class="tab-btn hover:text-indigo-800 pb-2">Minuman</button>
+        <button type="button" id="tab-snack" class="tab-btn hover:text-indigo-800 pb-2">Snack</button>
       </div>
 
-      <form class="space-y-6 pt-4 border-t border-slate-300">
+      <form id="form-qc-utama" class="space-y-6 pt-4 border-t border-slate-300">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
           <div class="md:col-span-4 form-group">
             <label class="form-label">Nomer PO</label>
@@ -172,6 +172,46 @@
           </div>
         </div>
       </form>
+
+      <div id="form-qc-makanan" class="space-y-8 pt-6 border-t border-slate-300 hidden">
+        <div>
+          <h3 class="text-xl font-bold text-indigo-900 tracking-wide mb-1">Berat Botol dan Cap (Gram)</h3>
+          <button type="button" class="px-6 py-2 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-medium rounded-lg shadow-sm mb-4 transition">Import</button>
+
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            <script>
+              for (let i = 1; i <= 10; i++) {
+                document.write(`
+                  <div class="flex flex-col gap-1">
+                    <label class="text-sm font-bold text-indigo-700 underline">${i}</label>
+                    <input type="number" step="0.01" placeholder="Input Density" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-300 transition shadow-sm" />
+                  </div>
+                `);
+              }
+            </script>
+          </div>
+        </div>
+
+        <hr class="border-slate-200 my-6" />
+
+        <div>
+          <h3 class="text-xl font-bold text-indigo-900 tracking-wide mb-1">Berat Gross (Gram)</h3>
+          <button type="button" class="px-6 py-2 bg-indigo-700 hover:bg-indigo-800 text-white text-sm font-medium rounded-lg shadow-sm mb-4 transition">Import</button>
+
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            <script>
+              for (let i = 1; i <= 10; i++) {
+                document.write(`
+                  <div class="flex flex-col gap-1">
+                    <label class="text-sm font-bold text-indigo-700 underline">${i}</label>
+                    <input type="number" step="0.01" placeholder="Input Density" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-300 transition shadow-sm" />
+                  </div>
+                `);
+              }
+            </script>
+          </div>
+        </div>
+      </div>
     </main>
 
     <div id="scanner-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
@@ -181,10 +221,63 @@
           Scan Barcode
         </h3>
         <div id="scanner-reader" class="overflow-hidden rounded-xl bg-slate-100 border border-slate-200" style="width: 100%"></div>
-
         <button type="button" id="btn-close-scanner" class="mt-4 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition">Batal / Tutup Kamera</button>
       </div>
     </div>
+
+    <script>
+      // Inisialisasi Ikon Lucide bawaan halaman
+      lucide.createIcons();
+
+      // DOM Elemen Tab & Form Container
+      const tabSemua = document.getElementById("tab-semua");
+      const tabMakanan = document.getElementById("tab-makanan");
+      const tabMinuman = document.getElementById("tab-minuman");
+      const tabSnack = document.getElementById("tab-snack");
+
+      const formUtama = document.getElementById("form-qc-utama");
+      const formMakanan = document.getElementById("form-qc-makanan");
+
+      // Fungsi menormalkan kembali style tab ke semula (non-aktif)
+      function bersihkanSemuaStyleTab() {
+        const semuaTab = document.querySelectorAll(".tab-btn");
+        semuaTab.forEach((btn) => {
+          btn.className = "tab-btn hover:text-indigo-800 pb-2 text-slate-400";
+        });
+      }
+
+      // Fungsi mengeset Tab menjadi Aktif secara visual
+      function setTabAktif(elemenTab) {
+        bersihkanSemuaStyleTab();
+        elemenTab.className = "tab-btn text-indigo-800 border-b-2 border-indigo-800 pb-2 -mb-[10px] px-1 font-semibold";
+      }
+
+      // Trigger Event Click Tab MAKANAN
+      tabMakanan.addEventListener("click", () => {
+        setTabAktif(tabMakanan);
+        formUtama.classList.add("hidden"); // Sembunyikan Form Utama (Semua)
+        formMakanan.classList.remove("hidden"); // Munculkan Form Grid 10 Makanan
+      });
+
+      // Trigger Event Click Tab SEMUA
+      tabSemua.addEventListener("click", () => {
+        setTabAktif(tabSemua);
+        formMakanan.classList.add("hidden"); // Sembunyikan Form Makanan
+        formUtama.classList.remove("hidden"); // Munculkan kembali Form Utama
+      });
+
+      // (Opsional) Sisanya jika diklik set pasif saja biar interaktif
+      tabMinuman.addEventListener("click", () => {
+        setTabAktif(tabMinuman);
+        formUtama.classList.add("hidden");
+        formMakanan.classList.add("hidden");
+      });
+      tabSnack.addEventListener("click", () => {
+        setTabAktif(tabSnack);
+        formUtama.classList.add("hidden");
+        formMakanan.classList.add("hidden");
+      });
+    </script>
 
     <script src="script.js"></script>
   </body>
